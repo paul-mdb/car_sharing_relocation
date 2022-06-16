@@ -1,3 +1,5 @@
 *.csv
 *.txt
 clean_data.ipynb
+.ipynb_checkpoints
+.ds_store
