@@ -9,6 +9,7 @@
 
 import sys
 zipcode = sys.argv[0]
+zipcode = 75008
 
 # ### Imports & connection to Elasticsearch
 
