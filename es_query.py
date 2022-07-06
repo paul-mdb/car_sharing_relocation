@@ -7,9 +7,7 @@
 
 # In[50]:
 
-import sys
-zipcode = sys.argv[0]
-zipcode = 75008
+zipcode = 75001
 
 # ### Imports & connection to Elasticsearch
 
