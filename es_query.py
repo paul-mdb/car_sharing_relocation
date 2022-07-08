@@ -5,7 +5,7 @@
 # 
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update-by-query.html to update and clean the data ?
 
-for zipcode in range(75005, 75021):
+for zipcode in range(75012, 75021):
   print(zipcode)
 
   ## Imports & connection to Elasticsearch
