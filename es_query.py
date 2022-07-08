@@ -128,6 +128,8 @@ for zipcode in range(75016, 75021):
 
   ## Utils
 
+  print("csv fetched from es!")
+
 
   month_duration_dict = {"Jan": 31, "Feb": 28, "Mar": 31, "Apr": 30, "May": 31, "Jun": 30, "Jul": 31, "Aug": 31, "Sep": 30, "Oct": 31, "Nov": 30, "Dec": 31}
 
@@ -360,6 +362,8 @@ for zipcode in range(75016, 75021):
   df = df[df["to_keep"]]
   df.drop("to_keep", axis=1, inplace=True)
   df.drop("Status_has_changed", axis=1, inplace=True)
+
+  print("interpolation done!")
 
 
   ## Start date column
