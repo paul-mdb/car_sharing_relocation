@@ -5,7 +5,7 @@
 # 
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update-by-query.html to update and clean the data ?
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75005, 75021):
   print(zipcode)
 
   ## Imports & connection to Elasticsearch
@@ -188,6 +188,8 @@ for zipcode in range(75001, 75021):
 
   df['distance']= pd.to_numeric(df['distance'], errors='coerce')
   df['distance'] = df['distance'].fillna(0)
+  df['delta_battery']= pd.to_numeric(df['delta_battery'], errors='coerce')
+  df['delta_battery'] = df['delta_battery'].fillna(0)
   df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
   df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
   df['zipcode'] = pd.to_numeric(df['zipcode'], errors='coerce')
@@ -282,8 +284,6 @@ for zipcode in range(75001, 75021):
   # 
   # In April, 2022, the locations are missins. The corresponding rows should be deleted
 
-  # In[86]:
-
 
   df = df[df['latitude'].notna()]
   df = df[df['longitude'].notna()]
@@ -298,13 +298,7 @@ for zipcode in range(75001, 75021):
       return df.loc[index, 'status']!=df.loc[last_index, 'status']
 
 
-  # In[89]:
-
-
   df['Status_has_changed']=df.index.map(has_changed_status)
-
-
-  # In[90]:
 
 
   def new_feature(index, feature_name):
