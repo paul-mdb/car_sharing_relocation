@@ -5,7 +5,6 @@ import datetime
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
-from pexpect import TIMEOUT
 from scipy.stats import pearsonr
 from sklearn.linear_model import LinearRegression
 import warnings
