@@ -12,9 +12,10 @@ warnings.filterwarnings("ignore")
 
 TIME_BLOCKS = [(0, 5), (6, 9), (10, 11), (12, 13), (14, 15), (16, 18), (19, 23)] # obtained from the daily number of trips in Lisbon
 PLOTS_FOLDER = "Plots/"
-AVG_FOLDER = "average_availability"
-NO_AVG_FOLDER = "no_average_availability"
-BOOKING_FOLDER = "bookings"
+AVG_FOLDER = "average_availability/"
+NO_AVG_FOLDER = "no_average_availability/"
+BOOKING_FOLDER = "bookings/"
+TABLE_FOLDER = "tables/"
 
 for zipcode in range(75001, 75021):
     print(zipcode)
@@ -24,9 +25,6 @@ for zipcode in range(75001, 75021):
     df.drop(["start_year", "start_month", "start_day_number", "start_hour", "start_minutes"], axis = 1, inplace = True)
     df = df[df['day_number']!=0]
     df = df[df['end_day_number']!=0]
-
-    def geo_block(dataframe, district):
-        return dataframe[dataframe['zipcode']==district]
 
     def time_block(dataframe, start_time, end_time, scripted_day):
         return dataframe.loc[(dataframe['hour']>= start_time) & (dataframe['hour']<= end_time) & (dataframe['day_of_week']==scripted_day)]
@@ -175,7 +173,6 @@ for zipcode in range(75001, 75021):
             ## AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = geo_block(df, zipcode)
             dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
@@ -185,7 +182,6 @@ for zipcode in range(75001, 75021):
             dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is Client
-            dataframe = geo_block(df, zipcode)
             dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']=='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
@@ -196,7 +192,6 @@ for zipcode in range(75001, 75021):
             client_dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is driver
-            dataframe = geo_block(df, zipcode)
             dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']!='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
@@ -236,13 +231,12 @@ for zipcode in range(75001, 75021):
             plt.ylabel("free duration mean")
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
             ## NO AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = geo_block(df, zipcode)
             dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
@@ -283,13 +277,12 @@ for zipcode in range(75001, 75021):
             plt.ylabel("free duration mean")
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
             ## Booking number & estimated demand
 
 
-            dataframe = geo_block(df, zipcode)
             dataframe = time_block(dataframe, start_date, end_date, day)
             df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
             df2 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x=='FREE').sum()).reset_index(name='free_count')
@@ -336,7 +329,7 @@ for zipcode in range(75001, 75021):
             ax1.legend(loc="upper left")
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            fig.savefig(PLOTS_FOLDER+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
             ## CORRELATIONS
@@ -344,7 +337,6 @@ for zipcode in range(75001, 75021):
             cor, cor_days, starts, stops, lengths = [], [], [], [], []
             for day in range(0, 7):
                 for start_date, end_date in TIME_BLOCKS:
-                    dataframe = geo_block(df, zipcode)
                     dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
                     dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
                     grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
@@ -364,7 +356,6 @@ for zipcode in range(75001, 75021):
             ## Tables
 
             def estimated_demand_mean(df, district, start_date, end_date, day):
-                dataframe = geo_block(df, district)
                 dataframe = time_block(dataframe, start_date, end_date, day)
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
@@ -374,7 +365,6 @@ for zipcode in range(75001, 75021):
 
 
             def estimated_demand_std(df, district, start_date, end_date, day):
-                dataframe = geo_block(df, district)
                 dataframe = time_block(dataframe, start_date, end_date, day)
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
@@ -384,7 +374,6 @@ for zipcode in range(75001, 75021):
 
 
             def number_of_bookings_mean(df, district, start_date, end_date, day):
-                dataframe = geo_block(df, district)
                 dataframe = time_block(dataframe, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
@@ -392,7 +381,6 @@ for zipcode in range(75001, 75021):
 
 
             def number_of_bookings_std(df, district, start_date, end_date, day):
-                dataframe = geo_block(df, district)
                 dataframe = time_block(dataframe, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
@@ -413,4 +401,4 @@ for zipcode in range(75001, 75021):
                 array = np.vstack([array, row])
 
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
-            results.to_csv(PLOTS_FOLDER+f"RESULTS_TABLE-{zipcode}")
+            results.to_csv(PLOTS_FOLDER+f"{zipcode}/"+TABLE_FOLDER+f"RESULTS_TABLE-{zipcode}")
