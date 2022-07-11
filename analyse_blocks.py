@@ -173,7 +173,7 @@ for zipcode in range(75001, 75021):
             ## AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
             durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
@@ -182,7 +182,7 @@ for zipcode in range(75001, 75021):
             dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is Client
-            dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']=='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
@@ -192,7 +192,7 @@ for zipcode in range(75001, 75021):
             client_dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is driver
-            dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']!='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
@@ -237,7 +237,7 @@ for zipcode in range(75001, 75021):
             ## NO AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
             count = np.array(grouped_df['kibana_duration']['count'].values)
@@ -283,7 +283,7 @@ for zipcode in range(75001, 75021):
             ## Booking number & estimated demand
 
 
-            dataframe = time_block(dataframe, start_date, end_date, day)
+            dataframe = time_block(df, start_date, end_date, day)
             df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
             df2 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x=='FREE').sum()).reset_index(name='free_count')
             booked_count = np.array(df1['booked_count'].values)
