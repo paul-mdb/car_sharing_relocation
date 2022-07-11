@@ -18,7 +18,7 @@ NO_AVG_FOLDER = "no_average_availability/"
 BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75002, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
@@ -167,6 +167,7 @@ for zipcode in range(75001, 75021):
     ## PLOTS
 
     for start_date, end_date in TIME_BLOCKS:
+        print(start_date, end_date)
         for day in range(7):
 
             ## AVERAGE AVAILABILITY
@@ -299,7 +300,7 @@ for zipcode in range(75001, 75021):
             pearson = pearsonr(free_count, booked_count)[0]
 
             x = np.array(client_count).reshape(-1, 1)
-            y = np.array(mu)
+            y = np.nan_to_num(np.array(mu))
             a_mu, _, _, _ = np.linalg.lstsq(x, y)
             pearson_mu = pearsonr(client_count, mu)[0]
 
