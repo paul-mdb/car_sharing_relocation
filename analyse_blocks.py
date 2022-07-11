@@ -169,7 +169,7 @@ for zipcode in range(75002, 75021):
     for start_date, end_date in TIME_BLOCKS:
         print(start_date, end_date)
         for day in range(7):
-            print(day)
+            print(f"day: {day}")
 
             ## AVERAGE AVAILABILITY
 
@@ -304,14 +304,21 @@ for zipcode in range(75002, 75021):
             x = np.array(free_count).reshape(-1, 1)
             y = np.array(booked_count)
             a, _, _, _ = np.linalg.lstsq(x, y)
-            pearson = pearsonr(free_count, booked_count)[0]
+            try:
+                pearson = pearsonr(free_count, booked_count)[0]
+            except:
+                pearson=0
 
             x = np.array(client_count).reshape(-1, 1)
             y = np.nan_to_num(np.array(mu))
             a_mu, _, _, _ = np.linalg.lstsq(x, y)
             try :
                 pearson_mu = pearsonr(client_count, mu)[0]
-            except :
+            except Exception as e:
+                print("EXCEPTIO")
+                print(e)
+                print(client_count)
+                print(mu)
                 pearson_mu = 0
 
             fig, (ax1, ax2) = plt.subplots(2)
