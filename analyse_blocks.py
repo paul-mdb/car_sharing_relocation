@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from sklearn.linear_model import LinearRegression
 import warnings
+import gc
 warnings.filterwarnings("ignore")
 
 TIME_BLOCKS = [(0, 5), (6, 9), (10, 11), (12, 13), (14, 15), (16, 18), (19, 23)] # obtained from the daily number of trips in Lisbon
@@ -402,4 +403,6 @@ for zipcode in range(75001, 75021):
                 array = np.vstack([array, row])
 
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
-            results.to_csv(PLOTS_FOLDER+f"{zipcode}/"+TABLE_FOLDER+f"RESULTS_TABLE-{zipcode}")
+            # results.to_csv(PLOTS_FOLDER+f"{zipcode}/"+TABLE_FOLDER+f"RESULTS_TABLE-{zipcode}")
+
+        gc.collect()
