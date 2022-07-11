@@ -169,8 +169,11 @@ for zipcode in range(75002, 75021):
     for start_date, end_date in TIME_BLOCKS:
         print(start_date, end_date)
         for day in range(7):
+            print(day)
 
             ## AVERAGE AVAILABILITY
+
+            print("AVG")
 
             # Next group is any
             dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
@@ -237,6 +240,8 @@ for zipcode in range(75002, 75021):
 
             ## NO AVERAGE AVAILABILITY
 
+            print("NO AVG")
+
             # Next group is any
             dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
@@ -284,6 +289,8 @@ for zipcode in range(75002, 75021):
 
             ## Booking number & estimated demand
 
+            print("BOOKINGS")
+
 
             dataframe = time_block(df, start_date, end_date, day)
             df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
@@ -302,7 +309,10 @@ for zipcode in range(75002, 75021):
             x = np.array(client_count).reshape(-1, 1)
             y = np.nan_to_num(np.array(mu))
             a_mu, _, _, _ = np.linalg.lstsq(x, y)
-            pearson_mu = pearsonr(client_count, mu)[0]
+            try :
+                pearson_mu = pearsonr(client_count, mu)[0]
+            except :
+                pearson_mu = 0
 
             fig, (ax1, ax2) = plt.subplots(2)
 
