@@ -311,7 +311,7 @@ for zipcode in range(75002, 75021):
             y = np.nan_to_num(np.array(mu))
             a_mu, _, _, _ = np.linalg.lstsq(x, y)
             try :
-                pearson_mu = pearsonr(client_count, mu)[0]
+                pearson_mu = np.nan_to_num(pearsonr(client_count, mu)[0])
             except Exception as e:
                 print("EXCEPTION")
                 print(e)
