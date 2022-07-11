@@ -12,9 +12,12 @@ warnings.filterwarnings("ignore")
 
 TIME_BLOCKS = [(0, 5), (6, 9), (10, 11), (12, 13), (14, 15), (16, 18), (19, 23)] # obtained from the daily number of trips in Lisbon
 PLOTS_FOLDER = "Plots/"
+AVG_FOLDER = "average_availability"
+NO_AVG_FOLDER = "no_average_availability"
+BOOKING_FOLDER = "bookings"
 
 for zipcode in range(75001, 75021):
-
+    print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
 
@@ -169,7 +172,7 @@ for zipcode in range(75001, 75021):
     for start_date, end_date in TIME_BLOCKS:
         for day in range(7):
 
-            ## Average availability duration
+            ## AVERAGE AVAILABILITY
 
             # Next group is any
             dataframe = geo_block(df, zipcode)
@@ -233,10 +236,10 @@ for zipcode in range(75001, 75021):
             plt.ylabel("free duration mean")
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.savefig(PLOTS_FOLDER+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
-            ## Free duration (no average)
+            ## NO AVERAGE AVAILABILITY
 
             # Next group is any
             dataframe = geo_block(df, zipcode)
@@ -280,7 +283,7 @@ for zipcode in range(75001, 75021):
             plt.ylabel("free duration mean")
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.savefig(PLOTS_FOLDER+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
             ## Booking number & estimated demand
@@ -333,56 +336,10 @@ for zipcode in range(75001, 75021):
             ax1.legend(loc="upper left")
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            fig.savefig(PLOTS_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-            plt.show()
+            fig.savefig(PLOTS_FOLDER+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
 
 
-            dataframe = geo_block(df, zipcode)
-            dataframe = time_block(dataframe, start_date, end_date, day)
-            df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
-            df2 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x=='FREE').sum()).reset_index(name='free_count')
-            booked_count = np.array(df1['booked_count'].values)
-            free_count = df2['free_count'].values
-            mu = np.array(((1+client_count)/client_durations_means)*(end_date-start_date+1)*60) # queuing theory
-
-            x = np.array(free_count).reshape(-1, 1)
-            y = np.array(booked_count)
-            a, _, _, _ = np.linalg.lstsq(x, y)
-            pearson = pearsonr(free_count, booked_count)[0]
-
-            x = np.array(client_count).reshape(-1, 1)
-            y = np.array(mu)
-            a_mu, _, _, _ = np.linalg.lstsq(x, y)
-            pearson_mu = pearsonr(client_count, mu)[0]
-
-            fig, (ax1, ax2) = plt.subplots(2)
-
-            # fig.rcParams["figure.autolayout"] = True
-            # plt.plot(free_count, a*free_count, c='red', label = "Slope: %a" %(int(a[0]*1000)/1000) + f"\nPearson : {(int(pearson*1000)/1000)}" )
-            fig.set_figheight(10)
-            fig.set_figwidth(25)
-            ax1.plot(free_count, (1+booked_count)/(1+free_count), 'bo', label = "Slope: %a" %(int(a[0]*1000)/1000) + f"\nPearson : {(int(pearson*1000)/1000)}")
-            #ax1.plot(free_count, free_count, 'k--')
-            #ax1.plot(free_count, raw_demand, 'bo', c='red')
-            #ax1.plot(free_count, [np.mean(booked_count)]*len(free_count))
-            #ax1.plot(free_count, [np.mean(raw_demand+)]*len(free_count), c='red')
-            ax2.plot(client_count, (1+mu)/(1+client_count), 'bo', c='red', label = "Slope: %a" %(int(a_mu[0]*1000)/1000) + f"\nPearson : {(int(pearson_mu*1000)/1000)}")
-            #ax2.plot(free_count, free_count, 'k--')
-            ax1.set_ylim([0, 1])
-            ax2.set_ylim([0, 1])
-            #ax1.set_xlim([0,60])
-            #ax2.set_xlim([0, 60])
-            ax2.set_xlabel("Number of free cars in block")
-            ax1.set_ylabel("bookings (%)")
-            ax2.set_ylabel("Estimated demand (%)")
-            ax1.legend(loc="upper left")
-            ax2.legend(loc="upper left")
-            fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+f"BOOKINGS-DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-
-
-            ## Corrélations
-
+            ## CORRELATIONS
 
             cor, days, starts, stops, lengths = [], [], [], [], []
             for day in range(0, 7):
@@ -452,7 +409,7 @@ for zipcode in range(75001, 75021):
             # Calculating features and storing results in a dedicated dataframe
             array = np.empty(shape=(0, 4+len(features)))
             for day, (start_date, end_date) in itertools.product(days, TIME_BLOCKS):
-                row = [zipcode, days_dict[day+1], start_date, end_date]
+                row = [str(zipcode), days_dict[day+1], start_date, end_date]
                 for feature in features :
                     row.append(feature(df, zipcode, start_date, end_date, day))
                 array = np.vstack([array, row])
