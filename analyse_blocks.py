@@ -427,4 +427,4 @@ for zipcode in range(75002, 75021):
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
             # results.to_csv(PLOTS_FOLDER+f"{zipcode}/"+TABLE_FOLDER+f"RESULTS_TABLE-{zipcode}")
 
-        print(gc.collect())
+        # print(gc.collect())
