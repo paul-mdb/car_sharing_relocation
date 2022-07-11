@@ -353,7 +353,7 @@ for zipcode in range(75001, 75021):
 
             ## Tables
 
-            def estimated_demand_mean(df, district, start_date, end_date, day):
+            def estimated_demand_mean(df, start_date, end_date, day):
                 dataframe = time_block(df, start_date, end_date, day)
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
