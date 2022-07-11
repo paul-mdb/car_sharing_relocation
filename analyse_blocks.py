@@ -358,9 +358,7 @@ for zipcode in range(75001, 75021):
                         lengths.append(len(count))
                     except Exception as e:
                         print(e)
-            cor_df = pd.DataFrame(list(zip(days, starts, stops, cor, lengths)), columns=['day', 'start hour',  'end hour', 'Pearson correlation coefficient', 'Number of blocks'])
-            cor_df
-                    
+            cor_df = pd.DataFrame(list(zip(days, starts, stops, cor, lengths)), columns=['day', 'start hour',  'end hour', 'Pearson correlation coefficient', 'Number of blocks'])                    
 
 
             ## Tables
@@ -409,7 +407,9 @@ for zipcode in range(75001, 75021):
             # Calculating features and storing results in a dedicated dataframe
             array = np.empty(shape=(0, 4+len(features)))
             for day, (start_date, end_date) in itertools.product(days, TIME_BLOCKS):
-                row = [str(zipcode), days_dict[day+1], start_date, end_date]
+                print(day)
+                print(days_dict[day+1])
+                row = [zipcode, days_dict[day+1], start_date, end_date]
                 for feature in features :
                     row.append(feature(df, zipcode, start_date, end_date, day))
                 array = np.vstack([array, row])
