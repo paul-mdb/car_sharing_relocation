@@ -145,8 +145,6 @@ for zipcode in range(75001, 75021):
     split_df = pd.DataFrame()
     for index in df.index:
         split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
-    split_df.info()
-
     df = df.append(split_df, ignore_index = True)
 
     def get_week_day(index):
@@ -173,7 +171,7 @@ for zipcode in range(75001, 75021):
             ## AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
             durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
@@ -182,7 +180,7 @@ for zipcode in range(75001, 75021):
             dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is Client
-            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']=='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
@@ -192,7 +190,7 @@ for zipcode in range(75001, 75021):
             client_dates = (grouped_df['year'].astype(str) + "/" + grouped_df['month'].astype(str) + "/" + grouped_df['day_number'].astype(str)).values
 
             # Next group-id is driver
-            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['next_group_id']!='Client']
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std'], 'next_group_id': 'first'})
@@ -237,7 +235,7 @@ for zipcode in range(75001, 75021):
             ## NO AVERAGE AVAILABILITY
 
             # Next group is any
-            dataframe = time_block(df, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+            dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
             grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
             count = np.array(grouped_df['kibana_duration']['count'].values)
@@ -337,7 +335,7 @@ for zipcode in range(75001, 75021):
             cor, cor_days, starts, stops, lengths = [], [], [], [], []
             for day in range(0, 7):
                 for start_date, end_date in TIME_BLOCKS:
-                    dataframe = time_block(dataframe, start_date, end_date, day).loc[dataframe["status"]=="FREE"]
+                    dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
                     dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
                     grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                     durations_means = grouped_df['kibana_duration']['mean'].values
@@ -364,8 +362,8 @@ for zipcode in range(75001, 75021):
                 return int(np.mean(mu))
 
 
-            def estimated_demand_std(df, district, start_date, end_date, day):
-                dataframe = time_block(dataframe, start_date, end_date, day)
+            def estimated_demand_std(df, start_date, end_date, day):
+                dataframe = time_block(df, start_date, end_date, day)
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
                 durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
@@ -373,15 +371,15 @@ for zipcode in range(75001, 75021):
                 return int(np.std(mu))
 
 
-            def number_of_bookings_mean(df, district, start_date, end_date, day):
-                dataframe = time_block(dataframe, start_date, end_date, day)
+            def number_of_bookings_mean(df, start_date, end_date, day):
+                dataframe = time_block(df, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
                 return int(np.mean(booked_count))
 
 
-            def number_of_bookings_std(df, district, start_date, end_date, day):
-                dataframe = time_block(dataframe, start_date, end_date, day)
+            def number_of_bookings_std(df, start_date, end_date, day):
+                dataframe = time_block(df, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
                 return int(np.std(booked_count))
