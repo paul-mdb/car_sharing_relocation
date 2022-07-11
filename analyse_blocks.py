@@ -341,7 +341,7 @@ for zipcode in range(75001, 75021):
 
             ## CORRELATIONS
 
-            cor, days, starts, stops, lengths = [], [], [], [], []
+            cor, cor_days, starts, stops, lengths = [], [], [], [], []
             for day in range(0, 7):
                 for start_date, end_date in TIME_BLOCKS:
                     dataframe = geo_block(df, zipcode)
@@ -352,13 +352,13 @@ for zipcode in range(75001, 75021):
                     count = grouped_df['kibana_duration']['count'].values
                     try :
                         cor.append(pearsonr(count, durations_means)[0])
-                        days.append(days_dict[day+1])
+                        cor_days.append(days_dict[day+1])
                         starts.append(start_date)
                         stops.append(end_date)
                         lengths.append(len(count))
                     except Exception as e:
                         print(e)
-            cor_df = pd.DataFrame(list(zip(days, starts, stops, cor, lengths)), columns=['day', 'start hour',  'end hour', 'Pearson correlation coefficient', 'Number of blocks'])                    
+            cor_df = pd.DataFrame(list(zip(cor_days, starts, stops, cor, lengths)), columns=['day', 'start hour',  'end hour', 'Pearson correlation coefficient', 'Number of blocks'])                    
 
 
             ## Tables
@@ -407,8 +407,6 @@ for zipcode in range(75001, 75021):
             # Calculating features and storing results in a dedicated dataframe
             array = np.empty(shape=(0, 4+len(features)))
             for day, (start_date, end_date) in itertools.product(days, TIME_BLOCKS):
-                print(day)
-                print(days_dict[day+1])
                 row = [zipcode, days_dict[day+1], start_date, end_date]
                 for feature in features :
                     row.append(feature(df, zipcode, start_date, end_date, day))
