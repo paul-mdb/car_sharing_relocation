@@ -304,10 +304,8 @@ for zipcode in range(75002, 75021):
             x = np.array(free_count).reshape(-1, 1)
             y = np.array(booked_count)
             a, _, _, _ = np.linalg.lstsq(x, y)
-            try:
-                pearson = pearsonr(free_count, booked_count)[0]
-            except:
-                pearson=0
+            pearson = np.nan_to_num(pearsonr(free_count, booked_count)[0])
+
 
             x = np.array(client_count).reshape(-1, 1)
             y = np.nan_to_num(np.array(mu))
@@ -315,7 +313,7 @@ for zipcode in range(75002, 75021):
             try :
                 pearson_mu = pearsonr(client_count, mu)[0]
             except Exception as e:
-                print("EXCEPTIO")
+                print("EXCEPTION")
                 print(e)
                 print(client_count)
                 print(mu)
