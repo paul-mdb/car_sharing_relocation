@@ -230,6 +230,7 @@ for zipcode in range(75001, 75021):
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.close()
 
 
             ## NO AVERAGE AVAILABILITY
@@ -276,6 +277,7 @@ for zipcode in range(75001, 75021):
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.close()
 
 
             ## Booking number & estimated demand
@@ -328,6 +330,7 @@ for zipcode in range(75001, 75021):
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.close()
 
 
             ## CORRELATIONS
