@@ -18,7 +18,7 @@ NO_AVG_FOLDER = "no_average_availability/"
 BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
-for zipcode in range(75002, 75021):
+for zipcode in range(75003, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
@@ -384,7 +384,7 @@ for zipcode in range(75002, 75021):
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
                 durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
-                mu = ((1+count)/durations_means)*(end_date-start_date+1)*60 # queuing theory
+                mu = np.nan_to_num(((1+count)/durations_means)*(end_date-start_date+1)*60) # queuing theory
                 return int(np.mean(mu))
 
 
@@ -393,7 +393,7 @@ for zipcode in range(75002, 75021):
                 grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                 count = np.array(grouped_df['kibana_duration']['count'].values)
                 durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
-                mu = ((1+count)/durations_means)*(end_date-start_date+1)*60 # queuing theory
+                mu = np.nan_to_num(((1+count)/durations_means)*(end_date-start_date+1)*60) # queuing theory
                 return int(np.std(mu))
 
 
