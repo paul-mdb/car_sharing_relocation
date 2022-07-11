@@ -330,9 +330,13 @@ for zipcode in range(75002, 75021):
             #ax1.plot(free_count, raw_demand, 'bo', c='red')
             #ax1.plot(free_count, [np.mean(booked_count)]*len(free_count))
             #ax1.plot(free_count, [np.mean(raw_demand+)]*len(free_count), c='red')
-            print(a_mu)
-            print(pearson_mu)
-            ax2.plot(client_count, mu, 'bo', c='red', label = "Slope: %a" %(int(a_mu[0]*1000)/1000) + f"\nPearson : {(int(pearson_mu*1000)/1000)}")
+            
+            try :
+                ax2.plot(client_count, mu, 'bo', c='red', label = "Slope: %a" %(int(a_mu[0]*1000)/1000) + f"\nPearson : {(int(pearson_mu*1000)/1000)}")
+            except Exception as e :
+                print("EXCEPTION")
+                print(a_mu)
+                print(pearson_mu)
             ax2.plot(free_count, free_count, 'k--')
 
             for i, v in enumerate(free_count):
