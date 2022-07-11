@@ -22,10 +22,10 @@ for zipcode in range(75003, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
-
     df.drop(["start_year", "start_month", "start_day_number", "start_hour", "start_minutes"], axis = 1, inplace = True)
     df = df[df['day_number']!=0]
     df = df[df['end_day_number']!=0]
+    df = df[df['kibana_duration']!=0]
 
     def time_block(dataframe, start_time, end_time, scripted_day):
         return dataframe.loc[(dataframe['hour']>= start_time) & (dataframe['hour']<= end_time) & (dataframe['day_of_week']==scripted_day)]
