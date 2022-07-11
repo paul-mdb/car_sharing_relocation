@@ -166,6 +166,8 @@ for zipcode in range(75003, 75021):
 
     ## PLOTS
 
+    plt.figure(figsize=(25, 15))
+
     for start_date, end_date in TIME_BLOCKS:
         print(start_date, end_date)
         for day in range(7):
@@ -215,8 +217,7 @@ for zipcode in range(75003, 75021):
             intercept = reg.intercept_
             pearson, p_value = pearsonr(count, durations_means)
 
-            plt.figure(figsize=(25, 15))
-
+            
             plt.scatter(client_count,  client_durations_means, c=client_standards, cmap='Greens_r') # Points with lower standard deviation are shaded darker.
             plt.scatter(driver_count,  driver_durations_means, c=driver_standards, cmap='Reds_r') # Points with lower standard deviation are shaded darker.
 
@@ -235,7 +236,7 @@ for zipcode in range(75003, 75021):
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-            plt.close()
+            plt.clf()
 
 
             ## NO AVERAGE AVAILABILITY
@@ -264,8 +265,6 @@ for zipcode in range(75003, 75021):
 
             grouped_df = dataframe.groupby(by=['count', pd.cut(dataframe['kibana_duration'], 4)]).agg({'count': 'first', 'kibana_duration': ['mean', 'count']})
 
-            plt.figure(figsize=(25, 15))
-
             # plt.scatter(count,  durations) # Points with lower standard deviation are shaded darker.
             plt.scatter(grouped_df['count']['first'], grouped_df['kibana_duration']['mean'], s=grouped_df['kibana_duration']['count']*2)
 
@@ -284,7 +283,7 @@ for zipcode in range(75003, 75021):
             plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-            plt.close()
+            plt.clf()
 
 
             ## Booking number & estimated demand
@@ -353,7 +352,7 @@ for zipcode in range(75003, 75021):
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-            plt.close()
+            del fig
 
 
             ## CORRELATIONS
@@ -427,4 +426,5 @@ for zipcode in range(75003, 75021):
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
             # results.to_csv(PLOTS_FOLDER+f"{zipcode}/"+TABLE_FOLDER+f"RESULTS_TABLE-{zipcode}")
 
+    plt.close()
         # print(gc.collect())
