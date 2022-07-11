@@ -395,7 +395,7 @@ for zipcode in range(75001, 75021):
             for day, (start_date, end_date) in itertools.product(days, TIME_BLOCKS):
                 row = [zipcode, days_dict[day+1], start_date, end_date]
                 for feature in features :
-                    row.append(feature(df, zipcode, start_date, end_date, day))
+                    row.append(feature(df, start_date, end_date, day))
                 array = np.vstack([array, row])
 
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
