@@ -21,7 +21,7 @@ BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
 
-for zipcode in range(75008, 75021):
+for zipcode in range(75001, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
