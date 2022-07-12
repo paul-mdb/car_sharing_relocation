@@ -18,7 +18,8 @@ NO_AVG_FOLDER = "no_average_availability/"
 BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
-for zipcode in range(75003, 75021):
+
+for zipcode in range(75001, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
@@ -143,10 +144,10 @@ for zipcode in range(75003, 75021):
 
 
 
-    split_df = pd.DataFrame()
-    for index in df.index:
-        split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
-    df = df.append(split_df, ignore_index = True)
+    #split_df = pd.DataFrame()
+    #for index in df.index:
+        #split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
+    #df = df.append(split_df, ignore_index = True)
 
     def get_week_day(index):
         day = int(df.loc[index, 'day_number'])
@@ -159,7 +160,8 @@ for zipcode in range(75003, 75021):
 
     df['day_of_week']=df.index.map(get_week_day)
 
-    df.to_csv(f"{zipcode}_split.csv")
+    #df.to_csv(f"{zipcode}_split.csv")
+    df = pd.read_csv("75015_split.csv")
 
 
     # df = pd.read_csv("75008_split.csv")
@@ -233,7 +235,7 @@ for zipcode in range(75003, 75021):
 
             plt.xlabel("Number of free cars in block")
             plt.ylabel("free duration mean")
-            plt.legend(loc="upper left")
+            # plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
             plt.clf()
@@ -280,7 +282,7 @@ for zipcode in range(75003, 75021):
 
             plt.xlabel("Number of free cars in block")
             plt.ylabel("free duration mean")
-            plt.legend(loc="upper left")
+            # plt.legend(loc="upper left")
             plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
             plt.clf()
@@ -352,15 +354,15 @@ for zipcode in range(75003, 75021):
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
             fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
-            del fig
+            plt.clf()
 
 
             ## CORRELATIONS
 
             cor, cor_days, starts, stops, lengths = [], [], [], [], []
             for day in range(0, 7):
-                for start_date, end_date in TIME_BLOCKS:
-                    dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
+                for u, v in TIME_BLOCKS:
+                    dataframe = time_block(df, u, v, day).loc[df["status"]=="FREE"]
                     dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
                     grouped_df = dataframe.groupby(by=['month', 'day_number', 'year']).agg({'year': 'first', 'month': 'first', 'day_number': 'first', 'kibana_duration': ['mean', 'count', 'std']})
                     durations_means = grouped_df['kibana_duration']['mean'].values
@@ -368,8 +370,8 @@ for zipcode in range(75003, 75021):
                     try :
                         cor.append(pearsonr(count, durations_means)[0])
                         cor_days.append(days_dict[day+1])
-                        starts.append(start_date)
-                        stops.append(end_date)
+                        starts.append(u)
+                        stops.append(v)
                         lengths.append(len(count))
                     except Exception as e:
                         print(e)
@@ -417,10 +419,10 @@ for zipcode in range(75003, 75021):
 
             # Calculating features and storing results in a dedicated dataframe
             array = np.empty(shape=(0, 4+len(features)))
-            for day, (start_date, end_date) in itertools.product(days, TIME_BLOCKS):
-                row = [zipcode, days_dict[day+1], start_date, end_date]
+            for day, (u, v) in itertools.product(days, TIME_BLOCKS):
+                row = [zipcode, days_dict[day+1], u, v]
                 for feature in features :
-                    row.append(feature(df, start_date, end_date, day))
+                    row.append(feature(df, u, v, day))
                 array = np.vstack([array, row])
 
             results = pd.DataFrame(array, columns = ['district', 'day', 'start hour', 'end hour']+feature_names)
