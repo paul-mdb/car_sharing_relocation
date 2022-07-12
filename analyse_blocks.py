@@ -4,11 +4,13 @@ import pandas as pd
 import datetime
 import numpy as np
 import itertools
+import matplotlib
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from sklearn.linear_model import LinearRegression
 import warnings
 import gc
+matplotlib.use('Agg')
 warnings.filterwarnings("ignore")
 
 TIME_BLOCKS = [(0, 5), (6, 9), (10, 11), (12, 13), (14, 15), (16, 18), (19, 23)] # obtained from the daily number of trips in Lisbon
@@ -19,7 +21,7 @@ BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75008, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
 
