@@ -20,12 +20,9 @@ NO_AVG_FOLDER = "no_average_availability/"
 BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
-
 for zipcode in range(75001, 75021):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
-
-    df.drop(["start_year", "start_month", "start_day_number", "start_hour", "start_minutes"], axis = 1, inplace = True)
     df = df[df['day_number']!=0]
     df = df[df['end_day_number']!=0]
     df = df[df['kibana_duration']!=0]

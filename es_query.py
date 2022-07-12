@@ -1,22 +1,12 @@
-#!/usr/bin/env python
-# coding: utf-8
+from elasticsearch import Elasticsearch
+import pandas as pd
+import numpy as np
+import datetime
 
-# # Downloading and processing the data for one district
-# 
-# https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update-by-query.html to update and clean the data ?
-
-for zipcode in range(75001, 75021):
+for zipcode in range(75001, 75002):
   print(zipcode)
 
   ## Imports & connection to Elasticsearch
-
-
-  from elasticsearch import Elasticsearch
-  from ssl import create_default_context
-  import pandas as pd
-  import numpy as np
-  import sys
-  import datetime
 
   with open('connect.txt') as f:
       str = f.readlines()
@@ -124,7 +114,7 @@ for zipcode in range(75001, 75021):
 
 
   df = pd.json_normalize(result['hits']['hits'])
-  df = df[['_source.end__date', '_source.car_plate_number', '_source.status', '_source.group_id', '_source.duration', '_source.distance', '_source.location', '_source.zipcode', '_source.battery', '_source.end_battery', '_source.start_date']]
+  df = df[['_source.end__date', '_source.car_plate_number', '_source.status', '_source.group_id', '_source.duration', '_source.distance', '_source.location', '_source.zipcode', '_source.battery', '_source.end_battery']]
 
   ## Utils
 
@@ -151,7 +141,7 @@ for zipcode in range(75001, 75021):
   df['_source.group_id'].replace("Zity", "Client", inplace=True) # Map Zity to Client
   df['_source.status'].replace("BOOKED_PARKED", "BOOKED", inplace=True) # Map BOOKED_PARKED to BOOKED (interpolation is performed later)
   df['_source.group_id'].replace("Zity Corporate", "Defleeted", inplace=True) # Map Zity Corporate to Defleeted
-  df.rename(columns = {'_source.end__date':'end_date', '_source.car_plate_number':'car_plate_number', '_source.status':'status', '_source.group_id':'group_id', '_source.duration':'kibana_duration', '_source.distance':'distance', '_source.location':'location', '_source.zipcode':'zipcode', '_source.start_date':'start_date'}, inplace = True)
+  df.rename(columns = {'_source.end__date':'end_date', '_source.car_plate_number':'car_plate_number', '_source.status':'status', '_source.group_id':'group_id', '_source.duration':'kibana_duration', '_source.distance':'distance', '_source.location':'location', '_source.zipcode':'zipcode'}, inplace = True)
 
 
   ### Splitting and creating columns
@@ -176,14 +166,6 @@ for zipcode in range(75001, 75021):
   df[['end_hour', 'end_minutes', "end_seconds"]] = df['end_time'].str.split(':', expand=True)
   df.drop('end_time', axis=1, inplace=True)
   df.drop('end_seconds', axis=1, inplace=True)
-  df[['start_date', 'start_time']] = df['start_date'].str.split('T', expand=True)
-  df[['start_time', 'trash']] = df['start_time'].str.split('.', expand=True)
-  df.drop('trash', axis=1, inplace=True)
-  df[['start_year', 'start_month', "start_day_number"]] = df['start_date'].str.split('-', expand=True)
-  df.drop('start_date', axis=1, inplace=True)
-  df[['start_hour', 'start_minutes', "start_seconds"]] = df['start_time'].str.split(':', expand=True)
-  df.drop('start_time', axis=1, inplace=True)
-  df.drop('start_seconds', axis=1, inplace=True)
 
 
   ### Change types
@@ -202,11 +184,6 @@ for zipcode in range(75001, 75021):
   df['end_day_number'] = pd.to_numeric(df['end_day_number'], errors='coerce')
   df['end_hour'] = pd.to_numeric(df['end_hour'], errors='coerce')
   df['end_minutes'] = pd.to_numeric(df['end_minutes'], errors='coerce')
-  df['start_year'] = pd.to_numeric(df['start_year'], errors='coerce')
-  df['start_month'] = pd.to_numeric(df['start_month'], errors='coerce')
-  df['start_day_number'] = pd.to_numeric(df['start_day_number'], errors='coerce')
-  df['start_hour'] = pd.to_numeric(df['start_hour'], errors='coerce')
-  df['start_minutes'] = pd.to_numeric(df['start_minutes'], errors='coerce')
 
 
   ## Calculate end time since 2020
@@ -335,7 +312,7 @@ for zipcode in range(75001, 75021):
           return value
 
 
-  features_to_change = ['latitude', 'longitude', "start_year", "start_month", "start_day_number", "start_hour", "start_minutes"]
+  features_to_change = ['latitude', 'longitude']
   features_to_cumulate = ['distance', 'delta_battery']
 
   for name in features_to_change :
