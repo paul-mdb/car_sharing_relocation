@@ -1,12 +1,12 @@
+## Imports & connection to Elasticsearch
 from elasticsearch import Elasticsearch
 import pandas as pd
 import numpy as np
 import datetime
 
-for zipcode in range(75001, 75002):
+for zipcode in range(75001, 75021):
   print(zipcode)
 
-  ## Imports & connection to Elasticsearch
 
   with open('connect.txt') as f:
       str = f.readlines()
