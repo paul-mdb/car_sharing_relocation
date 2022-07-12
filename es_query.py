@@ -149,11 +149,12 @@ for zipcode in range(75016, 75021):
 
 
   df['_source.group_id'].replace("Zity", "Client", inplace=True) # Map Zity to Client
+  df['_source.status'].replace("BOOKED_PARKED", "BOOKED", inplace=True) # Map BOOKED_PARKED to BOOKED (interpolation is performed later)
   df['_source.group_id'].replace("Zity Corporate", "Defleeted", inplace=True) # Map Zity Corporate to Defleeted
   df.rename(columns = {'_source.end__date':'end_date', '_source.car_plate_number':'car_plate_number', '_source.status':'status', '_source.group_id':'group_id', '_source.duration':'kibana_duration', '_source.distance':'distance', '_source.location':'location', '_source.zipcode':'zipcode', '_source.start_date':'start_date'}, inplace = True)
 
 
-  # ### Splitting and creating columns
+  ### Splitting and creating columns
 
 
   df['delta_battery']=df['_source.end_battery']-df['_source.battery']
@@ -282,15 +283,18 @@ for zipcode in range(75016, 75021):
   df['status']=df.index.map(new_status)
 
 
-  # ### Missing locations BUG
-  # 
-  # In April, 2022, the locations are missins. The corresponding rows should be deleted
+  ### Missing locations BUG
+  
+  # In April, 2022, the locations are missing. The corresponding rows should be deleted
 
 
   df = df[df['latitude'].notna()]
   df = df[df['longitude'].notna()]
-
   df = df[df['end_year']>2000]
+
+
+  ### INTERPOLATION
+  # Code this again : sort by plate number and time; use df shift and 
 
 
   def has_changed_status(index):
