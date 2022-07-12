@@ -144,10 +144,10 @@ for zipcode in range(75001, 75021):
 
 
 
-    #split_df = pd.DataFrame()
-    #for index in df.index:
-        #split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
-    #df = df.append(split_df, ignore_index = True)
+    split_df = pd.DataFrame()
+    for index in df.index:
+        split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
+    df = df.append(split_df, ignore_index = True)
 
     def get_week_day(index):
         day = int(df.loc[index, 'day_number'])
@@ -160,8 +160,8 @@ for zipcode in range(75001, 75021):
 
     df['day_of_week']=df.index.map(get_week_day)
 
-    #df.to_csv(f"{zipcode}_split.csv")
-    df = pd.read_csv("75015_split.csv")
+    df.to_csv(f"{zipcode}_split.csv")
+    #df = pd.read_csv(f"{zipcode}_split.csv")
 
 
     # df = pd.read_csv("75008_split.csv")
@@ -171,13 +171,9 @@ for zipcode in range(75001, 75021):
     plt.figure(figsize=(25, 15))
 
     for start_date, end_date in TIME_BLOCKS:
-        print(start_date, end_date)
         for day in range(7):
-            print(f"day: {day}")
 
             ## AVERAGE AVAILABILITY
-
-            print("AVG")
 
             # Next group is any
             dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
@@ -243,8 +239,6 @@ for zipcode in range(75001, 75021):
 
             ## NO AVERAGE AVAILABILITY
 
-            print("NO AVG")
-
             # Next group is any
             dataframe = time_block(df, start_date, end_date, day).loc[df["status"]=="FREE"]
             dataframe = dataframe[dataframe['kibana_duration']<2000] # filter segments with duration > 2000 minutes = 33 hours
@@ -289,8 +283,6 @@ for zipcode in range(75001, 75021):
 
 
             ## Booking number & estimated demand
-
-            print("BOOKINGS")
 
 
             dataframe = time_block(df, start_date, end_date, day)
