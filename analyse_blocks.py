@@ -23,8 +23,6 @@ TABLE_FOLDER = "tables/"
 for zipcode in range(75001, 75002):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv", parse_dates=['end_date_time', 'start_date_time', 'kibana_duration_delta_time'])
-    df = df[df['day_number']!=0]
-    df = df[df['end_day_number']!=0]
     df = df[df['kibana_duration']!=0]
 
     ## UTILS
@@ -40,11 +38,6 @@ for zipcode in range(75001, 75002):
     days_dict = {1: "Monday", 2:"Tuesday", 3:"Wednesday", 4:"Thursday", 5:"Friday", 6: "Saturday", 7: "Sunday"}
     monthdict = {"Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5, "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10,  "Dec": 11}
     inv_month = {v: k for k, v in monthdict.items()}
-
-    df['month'] = df['month'].map(monthdict)+1
-    df['month'] = df['month'].astype(int)
-    df['day_number'] = df['day_number'].astype(int)
-    df['year'] = df['year'].astype(int)
 
     df = df.fillna(0)
     
@@ -85,8 +78,8 @@ for zipcode in range(75001, 75002):
                         new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)
                         new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
-                    new_segment = df.loc[index]
-                    new_segment['hour']=block_list[end_block][0]
+                    new_segment = df.loc[index].copy()
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[end_block][0])
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     df.drop(index, inplace=True)
             else :
@@ -139,13 +132,13 @@ for zipcode in range(75001, 75002):
         return additional_segments
 
 
-
+    
     split_df = pd.DataFrame()
     for index in df.index:
         split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
     df = df.append(split_df, ignore_index = True)
 
-
+    df['hour']=df['start_date_time'].dt.hour
     df['day_of_week']=df['start_date_time'].dt.day_of_week
     df['day_number']=df['start_date_time'].dt.day
     df['month']=df['start_date_time'].dt.month
@@ -202,6 +195,7 @@ for zipcode in range(75001, 75002):
             reg = LinearRegression().fit(x, y)
             steep = reg.coef_[0]
             intercept = reg.intercept_
+        
             pearson, p_value = pearsonr(count, durations_means)
 
             
@@ -376,21 +370,21 @@ for zipcode in range(75001, 75002):
                 count = np.array(grouped_df['kibana_duration']['count'].values)
                 durations_means = np.array(grouped_df['kibana_duration']['mean'].values)
                 mu = np.nan_to_num(((1+count)/durations_means)*(end_date-start_date+1)*60) # queuing theory
-                return int(np.std(mu))
+                return (np.std(mu))
 
 
             def number_of_bookings_mean(df, start_date, end_date, day):
                 dataframe = time_block(df, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
-                return int(np.mean(booked_count))
+                return (np.mean(booked_count))
 
 
             def number_of_bookings_std(df, start_date, end_date, day):
                 dataframe = time_block(df, start_date, end_date, day)
                 df1 = dataframe.groupby(by=['month', 'day_number', 'year'])['status'].apply(lambda x: (x!='FREE').sum()).reset_index(name='booked_count')
                 booked_count = np.array(df1['booked_count'].values)
-                return int(np.std(booked_count))
+                return (np.std(booked_count))
 
 
 

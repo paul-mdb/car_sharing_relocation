@@ -5,7 +5,7 @@ import numpy as np
 import datetime
 import pytz
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75001, 75002):
   print(zipcode)
 
 
