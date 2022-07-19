@@ -73,17 +73,18 @@ for zipcode in range(75001, 75002):
             while end_block >= 0 and end_hour <= block_list[end_block][1] :
                 end_block-=1
             end_block+=1
-            
+
             if start_day==end_day:
                 if start_block!=end_block:
-                    new_segment = df.loc[index]
-                    new_segment['end_hour']=block_list[start_block][1]
+                    new_segment = df.loc[index].copy()
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     for block in range(start_block+1, end_block):
-                        new_segment = df.loc[index]
-                        new_segment['hour']=block_list[block][0]
-                        new_segment['end_hour']=block_list[block][1]
-                        new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                        new_segment = df.loc[index].copy()
+                        new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
+                        new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[block][1])
+                        new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)
+                        new_segment['kibana_duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     new_segment = df.loc[index]
                     new_segment['hour']=block_list[end_block][0]
@@ -91,34 +92,37 @@ for zipcode in range(75001, 75002):
                     df.drop(index, inplace=True)
             else :
                 # Create segments start day
-                new_segment = df.loc[index]
-                new_segment['end_hour']=block_list[start_block][1]
-                new_segment['end_day_number']=start_day
-                new_segment['end_month']=month
-                new_segment['duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
+                new_segment = df.loc[index].copy()
+                new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
+                new_segment['end_date_time']=new_segment['end_date_time'].replace(day=start_day)
+                new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month)
+                new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)
+                new_segment['kibana_duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 for block in range(start_block+1, len(block_list)):
-                    new_segment = df.loc[index]
-                    new_segment['hour']=block_list[block][0]
-                    new_segment['end_hour']=block_list[block][1]
-                    new_segment['end_day_number']=start_day
-                    new_segment['end_month']=month
-                    new_segment['duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[block][0], 0)).seconds/60)
+                    new_segment = df.loc[index].copy()
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(day=start_day)
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month)
+                    new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)
+                    new_segment['kibana_duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments end day
                 for block in range(0, end_block):
-                    new_segment = df.loc[index]
-                    new_segment['hour']=block_list[block][0]
-                    new_segment['end_hour']=block_list[block][1]
-                    new_segment['day_number']=end_day
-                    new_segment['month']=end_month
+                    new_segment = df.loc[index].copy()
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(day=end_day)
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(month=end_month)
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
                     new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 new_segment = df.loc[index]
                 new_segment['hour']=block_list[end_block][0]
                 new_segment['day_number']=end_day
                 new_segment['month']=end_month
-                new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[end_block][0], 0)).seconds/60)
+                new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)
+                new_segment['kibana_duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments other days
                 try :

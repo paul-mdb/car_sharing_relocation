@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75008, 75021):
   print(zipcode)
 
 
@@ -139,7 +139,7 @@ for zipcode in range(75001, 75021):
 
   ## Splitting and creating columns
 
-  df['end_date_time']= pd.to_datetime(df['end_date'], infer_datetime_format=True, utc=True)
+  df['end_date_time']= pd.to_datetime(df['end_date'], infer_datetime_format=True, utc=True, errors = 'coerce')
   df['delta_battery']=df['_source.end_battery']-df['_source.battery']
   df.drop('_source.end_battery', axis=1, inplace=True)
   df.drop('_source.battery', axis=1, inplace=True)
