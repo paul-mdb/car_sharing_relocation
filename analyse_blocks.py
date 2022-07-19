@@ -22,7 +22,7 @@ TABLE_FOLDER = "tables/"
 
 for zipcode in range(75001, 75002):
     print(zipcode)
-    df = pd.read_csv(f"{zipcode}.csv")
+    df = pd.read_csv(f"{zipcode}.csv", parse_dates=['end_date_time', 'start_date_time', 'kibana_duration_delta_time'])
     df = df[df['day_number']!=0]
     df = df[df['end_day_number']!=0]
     df = df[df['kibana_duration']!=0]
@@ -54,7 +54,6 @@ for zipcode in range(75001, 75002):
         df[col] = df[col].astype('int64')
 
     ## Split overlapping segments to match time blocks and get ALL segments in one block
-
     def split(index, block_list):
         additional_segments = pd.DataFrame()
         if df.loc[index, 'status']=="FREE":
@@ -83,8 +82,8 @@ for zipcode in range(75001, 75002):
                         new_segment = df.loc[index].copy()
                         new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
                         new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[block][1])
-                        new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)
-                        new_segment['kibana_duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                        new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                        new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     new_segment = df.loc[index]
                     new_segment['hour']=block_list[end_block][0]
@@ -93,36 +92,29 @@ for zipcode in range(75001, 75002):
             else :
                 # Create segments start day
                 new_segment = df.loc[index].copy()
-                new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
-                new_segment['end_date_time']=new_segment['end_date_time'].replace(day=start_day)
-                new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month)
-                new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)
-                new_segment['kibana_duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
+                new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month, day=start_day, hour=block_list[start_block][1])
+                new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(year, month, start_day, block_list[start_block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(year, month, start_day, block_list[start_block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 for block in range(start_block+1, len(block_list)):
                     new_segment = df.loc[index].copy()
                     new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
-                    new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
-                    new_segment['end_date_time']=new_segment['end_date_time'].replace(day=start_day)
-                    new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month)
-                    new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)
-                    new_segment['kibana_duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
+                    new_segment['end_date_time']=new_segment['end_date_time'].replace(month=month, day=start_day, hour=block_list[start_block][1])
+                    new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(year, month, start_day, block_list[start_block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                    new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(year, month, start_day, block_list[start_block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments end day
                 for block in range(0, end_block):
                     new_segment = df.loc[index].copy()
-                    new_segment['start_date_time']=new_segment['start_date_time'].replace(hour=block_list[block][0])
-                    new_segment['start_date_time']=new_segment['start_date_time'].replace(day=end_day)
-                    new_segment['start_date_time']=new_segment['start_date_time'].replace(month=end_month)
+                    new_segment['start_date_time']=new_segment['start_date_time'].replace(month=end_month, day=end_day, hour=block_list[block][0])
                     new_segment['end_date_time']=new_segment['end_date_time'].replace(hour=block_list[start_block][1])
-                    new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                    new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                    new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
-                new_segment = df.loc[index]
-                new_segment['hour']=block_list[end_block][0]
-                new_segment['day_number']=end_day
-                new_segment['month']=end_month
-                new_segment['kibana_duration_delta_time']=end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)
-                new_segment['kibana_duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                new_segment = df.loc[index].copy()
+                new_segment['start_date_time']=new_segment['start_date_time'].replace(month=end_month, day=end_day, hour=block_list[end_block][0])
+                new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[end_block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, end_month, end_day, block_list[end_block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments other days
                 try :
@@ -136,13 +128,11 @@ for zipcode in range(75001, 75002):
                     
                 while date < end_date:
                     for block in range(0, len(block_list)):
-                        new_segment = df.loc[index]
-                        new_segment['hour']=block_list[block][0]
-                        new_segment['end_hour']=block_list[block][1]
-                        new_segment['day_number']=date.day
-                        new_segment['end_day_number']=date.day
-                        new_segment['month']=date.month
-                        new_segment['duration']=int((end_date_time - datetime.datetime(end_year, date.month, date.day, block_list[block][0], 0)).seconds/60)
+                        new_segment = df.loc[index].copy()
+                        new_segment['start_date_time']=new_segment['start_date_time'].replace(month=date.month, day=date.day, hour=block_list[block][0])
+                        new_segment['end_date_time']=new_segment['end_date_time'].replace(month=date.month, day=date.day, hour=block_list[block][1])
+                        new_segment['kibana_duration_delta_time']=end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, date.month, date.day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)
+                        new_segment['kibana_duration']=int((end_date_time.replace(tzinfo=datetime.timezone.utc) - datetime.datetime(end_year, date.month, date.day, block_list[block][0], 0).replace(tzinfo=datetime.timezone.utc)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     date += datetime.timedelta(days=1)
                 df.drop(index, inplace=True)
@@ -155,22 +145,15 @@ for zipcode in range(75001, 75002):
         split_df = split_df.append(split(index, TIME_BLOCKS), ignore_index = True)
     df = df.append(split_df, ignore_index = True)
 
-    def get_week_day(index):
-        day = int(df.loc[index, 'day_number'])
-        month = int(df.loc[index, 'month'])
-        year = int(df.loc[index, 'year'])
-        if day==0:
-            # Bug: 179 entries with date 2021-01-0, scripted_day_of_week was indicating 3 in isoweekday
-            return 2
-        return datetime.date(year, month, day).weekday()
 
-    df['day_of_week']=df.index.map(get_week_day)
-
+    df['day_of_week']=df['start_date_time'].dt.day_of_week
+    df['day_number']=df['start_date_time'].dt.day
+    df['month']=df['start_date_time'].dt.month
+    df['year']=df['start_date_time'].dt.year
+    df = df.sort_values(by="start_date_time", ascending = False)
+    df.reset_index(drop=True, inplace = True)
     df.to_csv(f"{zipcode}_split.csv")
-    #df = pd.read_csv(f"{zipcode}_split.csv")
-
-
-    # df = pd.read_csv("75008_split.csv")
+    # df = pd.read_csv(f"{zipcode}_split.csv", parse_dates=['end_date_time', 'start_date_time', 'kibana_duration_delta_time'])
 
     ## PLOTS
 

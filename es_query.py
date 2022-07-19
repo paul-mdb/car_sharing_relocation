@@ -3,8 +3,9 @@ from elasticsearch import Elasticsearch
 import pandas as pd
 import numpy as np
 import datetime
+import pytz
 
-for zipcode in range(75008, 75021):
+for zipcode in range(75001, 75021):
   print(zipcode)
 
 
@@ -180,6 +181,12 @@ for zipcode in range(75008, 75021):
   df = df.sort_values(by=["car_plate_number", "end_date_time"], ascending = False)
   df.reset_index(drop=True, inplace = True)
 
+  ## Next segment group-id column
+  df["next_group_id"] = df["group_id"].shift(1)
+  df["last_plate"] = df['car_plate_number'].shift(-1)
+  df["next_plate"] = df['car_plate_number'].shift(1)
+  df.loc[df["next_plate"]!=df["car_plate_number"], 'next_group_id'] = "no next plate"
+
   ## Remove (BOOKED, Client) when previous segment is (BOOKED, Battery). We do not want to detect when a driver drives back a car from charge (at this moment group id changed from battery to client)
 
   df['last_group'] = df['group_id'].shift(-1)
@@ -209,12 +216,9 @@ for zipcode in range(75008, 75021):
           return -1
       return plate_segments[plate_segments.index(index)-1]
 
-  ## Next segment group-id column
+  
 
-  df["last_plate"] = df['car_plate_number'].shift(-1)
-  df["next_plate"] = df['car_plate_number'].shift(1)
-  df["next_group_id"] = df["group_id"].shift(1)
-  df.loc[df["next_plate"]!=df["car_plate_number"], 'next_group_id'] = "no next plate"
+  
 
 
   ## Keep only "CLIENT" Group-ids
@@ -286,6 +290,7 @@ for zipcode in range(75008, 75021):
   # Delete lines
 
   df['to_keep'] = df['Status_has_changed'].shift(1)
+  df["next_plate"] = df['car_plate_number'].shift(1)
   df.loc[df["next_plate"]!=df["car_plate_number"], 'to_keep'] = True
 
   df = df[df["to_keep"]]
@@ -333,6 +338,7 @@ for zipcode in range(75008, 75021):
   # Delete lines
 
   df['to_keep'] = df['Status_has_changed'].shift(1)
+  df["next_plate"] = df['car_plate_number'].shift(1)
   df.loc[df["next_plate"]!=df["car_plate_number"], 'to_keep'] = True
 
   df = df[df["to_keep"]]
@@ -340,7 +346,6 @@ for zipcode in range(75008, 75021):
   df.drop("Status_has_changed", axis=1, inplace=True)
   df.drop('last_plate', axis=1, inplace=True)
   df.drop('next_plate', axis=1, inplace=True)
-  df.drop('next_group_id', axis=1, inplace=True)
   df.drop('last_status', axis=1, inplace=True)
   df.drop('end_date', axis=1, inplace=True)
 
