@@ -14,7 +14,7 @@ for zipcode in range(75001, 75021):
   es = Elasticsearch(str)
 
 
-  # ### Change maximum size setting
+  ### Change maximum size setting
   # By default the query returns the first 10,000 hits
 
 
@@ -108,56 +108,49 @@ for zipcode in range(75001, 75021):
   )
 
 
-
-
   ## Convert data to dataframe
 
 
   df = pd.json_normalize(result['hits']['hits'])
-  df = df[['_source.end__date', '_source.car_plate_number', '_source.status', '_source.group_id', '_source.duration', '_source.distance', '_source.location', '_source.zipcode', '_source.battery', '_source.end_battery']]
-
-  ## Utils
+  df = df[['_source.end__date', '_source.car_plate_number', '_source.status', '_source.group_id', '_source.duration', '_source.distance', '_source.location', '_source.end_location', '_source.zipcode', '_source.battery', '_source.end_battery']]
 
   print("csv fetched from es!")
 
+  ## Utils
 
   month_duration_dict = {"Jan": 31, "Feb": 28, "Mar": 31, "Apr": 30, "May": 31, "Jun": 30, "Jul": 31, "Aug": 31, "Sep": 30, "Oct": 31, "Nov": 30, "Dec": 31}
 
-  durations = np.array(list(month_duration_dict.values()))
-  cum_durations = np.cumsum(durations)
+  month_durations = np.array(list(month_duration_dict.values()))
+  cum_durations = np.cumsum(month_durations)
   cum_dict = {i+1: cum_durations[i] for i in range(len(cum_durations))}
   cum_dict[0]=0
-
   week_dict = {"Monday": 0, "Tuesday": 1, "Wednesday": 2, "Thursday": 3, "Friday": 4, "Saturday": 5, "Sunday": 6}
-
   monthdict = {"Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5, "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10,  "Dec": 11}
-
   inv_month = {v: k for k, v in monthdict.items()}
 
 
-  ## Map values
-
+  ## Map values and rename columns
 
   df['_source.group_id'].replace("Zity", "Client", inplace=True) # Map Zity to Client
   df['_source.status'].replace("BOOKED_PARKED", "BOOKED", inplace=True) # Map BOOKED_PARKED to BOOKED (interpolation is performed later)
   df['_source.group_id'].replace("Zity Corporate", "Defleeted", inplace=True) # Map Zity Corporate to Defleeted
-  df.rename(columns = {'_source.end__date':'end_date', '_source.car_plate_number':'car_plate_number', '_source.status':'status', '_source.group_id':'group_id', '_source.duration':'kibana_duration', '_source.distance':'distance', '_source.location':'location', '_source.zipcode':'zipcode'}, inplace = True)
+  df.rename(columns = {'_source.end__date':'end_date', '_source.car_plate_number':'car_plate_number', '_source.status':'status', '_source.group_id':'group_id', '_source.duration':'kibana_duration', '_source.distance':'distance', '_source.location':'location', '_source.end_location':'end_location', '_source.zipcode':'zipcode'}, inplace = True)
 
 
-  ### Splitting and creating columns
+  ## Splitting and creating columns
 
-
+  df['end_date_time']= pd.to_datetime(df['end_date'], infer_datetime_format=True, utc=True)
   df['delta_battery']=df['_source.end_battery']-df['_source.battery']
   df.drop('_source.end_battery', axis=1, inplace=True)
   df.drop('_source.battery', axis=1, inplace=True)
   df[['latitude', 'longitude']] = df['location'].str.split(',', expand=True)
   df.drop('location', axis=1, inplace=True)
+  df[['end_latitude', 'end_longitude']] = df['end_location'].str.split(',', expand=True)
+  df.drop('end_location', axis=1, inplace=True)
   df['kibana_duration'] = pd.to_numeric(df['kibana_duration'], errors='coerce')
   df['kibana_duration'] = df['kibana_duration'].replace(np.nan, 0)
   df["kibana_duration"] = df["kibana_duration"].astype(int)
-  #df['kibana_duration'] = df['kibana_duration'].astype(str)
-  #df[['kibana_duration', 'trash']] = df['kibana_duration'].str.split('.', expand=True)
-  #df.drop('trash', axis=1, inplace=True)
+  """
   df[['end_date', 'end_time']] = df['end_date'].str.split('T', expand=True)
   df[['end_time', 'trash']] = df['end_time'].str.split('.', expand=True)
   df.drop('trash', axis=1, inplace=True)
@@ -165,42 +158,40 @@ for zipcode in range(75001, 75021):
   df.drop('end_date', axis=1, inplace=True)
   df[['end_hour', 'end_minutes', "end_seconds"]] = df['end_time'].str.split(':', expand=True)
   df.drop('end_time', axis=1, inplace=True)
-  df.drop('end_seconds', axis=1, inplace=True)
+  df.drop('end_seconds', axis=1, inplace=True)"""
 
 
   ### Change types
 
 
   df['distance']= pd.to_numeric(df['distance'], errors='coerce')
-  df['distance'] = df['distance'].fillna(0)
+  df['distance'] = df['distance'].fillna(0).astype(int)
   df['delta_battery']= pd.to_numeric(df['delta_battery'], errors='coerce')
-  df['delta_battery'] = df['delta_battery'].fillna(0)
+  df['delta_battery'] = df['delta_battery'].fillna(0).astype(int)
   df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
   df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
+  df['end_latitude'] = pd.to_numeric(df['end_latitude'], errors='coerce')
+  df['end_longitude'] = pd.to_numeric(df['end_longitude'], errors='coerce')
   df['zipcode'] = pd.to_numeric(df['zipcode'], errors='coerce')
-  df['kibana_duration'] = pd.to_numeric(df['kibana_duration'], errors='coerce')
-  df['end_year'] = pd.to_numeric(df['end_year'], errors='coerce')
-  df['end_month'] = pd.to_numeric(df['end_month'], errors='coerce')
-  df['end_day_number'] = pd.to_numeric(df['end_day_number'], errors='coerce')
-  df['end_hour'] = pd.to_numeric(df['end_hour'], errors='coerce')
-  df['end_minutes'] = pd.to_numeric(df['end_minutes'], errors='coerce')
+  df['kibana_duration'] = pd.to_numeric(df['kibana_duration'], errors='coerce').astype(int)
 
+  ## Sort by plate number and end date
 
-  ## Calculate end time since 2020
+  df = df.sort_values(by=["car_plate_number", "end_date_time"], ascending = False)
+  df.reset_index(drop=True, inplace = True)
 
-  df['time_since_2020'] = (df['end_year']-2020)*365*24*60 + ((df['end_month']-1).map(cum_dict)+df['end_day_number'])*24*60 + df['end_hour']*60 + df['end_minutes']
+  ## Remove (BOOKED, Client) when previous segment is (BOOKED, Battery). We do not want to detect when a driver drives back a car from charge (at this moment group id changed from battery to client)
 
-  ## Sort by end date
-
-
-  df = df.sort_values(by='time_since_2020', ascending = False)
+  df['last_group'] = df['group_id'].shift(-1)
+  df['last_status'] = df['status'].shift(-1)
+  df = df.loc[(df['group_id']!='Client')|(df['status']!="BOOKED")|(df['last_group']!='Battery')|(df['last_status']!="BOOKED")]
+  df.drop('last_group', axis=1, inplace=True)
+  df.drop('last_status', axis=1, inplace=True)
   df.reset_index(drop=True, inplace = True)
 
 
-  ## Calculation of the durations
 
-  # Only the end dates are reliable. The start date for a given segment corresponds to the last end date for the same plate.
-
+  ## UTILS
 
   def latest_segment(index):
       # returns index of the latest segment for the same plate
@@ -218,70 +209,31 @@ for zipcode in range(75001, 75021):
           return -1
       return plate_segments[plate_segments.index(index)-1]
 
-
-  def duration(index):
-      # returns the duration for a given index, only takes into account days and time
-      
-      previous_index = latest_segment(index)
-      if previous_index==-1:
-          return 0
-      return df.loc[index, 'time_since_2020'] - df.loc[previous_index, 'time_since_2020']
-
-
-  # Durations should be calculated on data not restricted to a specific district otherwise it makes no sense to look for the last occurence of the same plate as the car have travelled tto another district !
-
-  #df['duration']=df.index.map(duration)
-  df['duration']=df['kibana_duration'] 
-
-
   ## Next segment group-id column
 
-
-  def next_group_id(index):
-      next_index = next_segment(index)
-      if next_index == -1:
-          return "no next plate"
-      else :
-          return df.loc[next_index, 'group_id']
-  df['next_group_id']=df.index.map(next_group_id)
+  df["last_plate"] = df['car_plate_number'].shift(-1)
+  df["next_plate"] = df['car_plate_number'].shift(1)
+  df["next_group_id"] = df["group_id"].shift(1)
+  df.loc[df["next_plate"]!=df["car_plate_number"], 'next_group_id'] = "no next plate"
 
 
   ## Keep only "CLIENT" Group-ids
 
   df = df[df['group_id']=="Client"]
 
-  def new_status(index):
-      status = df.loc[index, 'status']
-      distance = df.loc[index, 'distance']
-      if (status=="BOOKED" or status=="BOOKED_PARK") and distance==0:
-          return "FREE"
-      return status
-
-  df['status']=df.index.map(new_status)
-
-
-  ### Missing locations BUG
-  
-  # In April, 2022, the locations are missing. The corresponding rows should be deleted
-
+  ## Filter corrupt data
 
   df = df[df['latitude'].notna()]
   df = df[df['longitude'].notna()]
-  df = df[df['end_year']>2000]
+  df = df[df['end_date_time'].dt.year>2000]
+  df = df[df['end_date_time'].dt.day!=0]
 
-
-  ### INTERPOLATION
-  # Code this again : sort by plate number and time; use df shift and 
-
-
-  def has_changed_status(index):
-      last_index = latest_segment(index)
-      if last_index==-1:
-          return True
-      return df.loc[index, 'status']!=df.loc[last_index, 'status']
-
-
-  df['Status_has_changed']=df.index.map(has_changed_status)
+  ### 1st INTERPOLATION
+    
+  df['last_plate'] = df['car_plate_number'].shift(-1)
+  df['last_status'] = df['status'].shift(-1)
+  df['Status_has_changed'] = df['status']!=df['last_status']
+  df.loc[df["last_plate"]!=df["car_plate_number"], 'Status_has_changed'] = True
 
 
   def new_feature(index, feature_name):
@@ -313,7 +265,7 @@ for zipcode in range(75001, 75021):
 
 
   features_to_change = ['latitude', 'longitude']
-  features_to_cumulate = ['distance', 'delta_battery']
+  features_to_cumulate = ['distance', 'delta_battery', 'kibana_duration']
 
   for name in features_to_change :
       df['new_'+name] = df.index.map(lambda x: new_feature(x, name))
@@ -332,70 +284,82 @@ for zipcode in range(75001, 75021):
       df.drop('new_'+name, axis=1, inplace=True)
 
   # Delete lines
-  def to_keep(index):
-      next_index = next_segment(index)
-      if next_index == -1 or df.loc[next_index, 'Status_has_changed']:
-          return True
-      return False
 
+  df['to_keep'] = df['Status_has_changed'].shift(1)
+  df.loc[df["next_plate"]!=df["car_plate_number"], 'to_keep'] = True
 
-  df["to_keep"]=df.index.map(to_keep)
   df = df[df["to_keep"]]
   df.drop("to_keep", axis=1, inplace=True)
   df.drop("Status_has_changed", axis=1, inplace=True)
 
-  print("interpolation done!")
+  print("first interpolation done!")
 
+  ### Remove bookings with 0 distance and duration < 10 minutes
 
-  ## Start date column
+  def new_status(index):
+      status = df.loc[index, 'status']
+      distance = df.loc[index, 'distance']
+      location = df.loc[index, 'latitude'], df.loc[index, 'longitude']
+      end_location = df.loc[index, 'end_latitude'], df.loc[index, 'end_longitude']
+      if status=="BOOKED" and distance==0 and end_location == location:
+          return "FREE"
+      return status
 
-  def start_date(index):
-      time = df.loc[index, 'time_since_2020'] - df.loc[index, 'kibana_duration'] # Start time since 2020
-      year = 2020 + time // (365*24*60)
-      time = time % (365*24*60)
-      i = 0
-      while cum_durations[i]< (time // (24*60)) and i < 12:
-          i+=1
-      month = inv_month[i]
-      day = time // (24*60) - cum_durations[i-1] if i else time // (24*60)
-      time = time % (24*60)
-      hour = time // 60
-      minute = time % 60
-      return year, month, day, hour, minute
-    
+  df['status']=df.index.map(new_status)
+
+  ### 2nd INTERPOLATION
+
+  df['last_plate'] = df['car_plate_number'].shift(-1)
+  df['last_status'] = df['status'].shift(-1)
+  df['Status_has_changed'] = df['status']!=df['last_status']
+  df.loc[df["last_plate"]!=df["car_plate_number"], 'Status_has_changed'] = True
+
+  for name in features_to_change :
+      df['new_'+name] = df.index.map(lambda x: new_feature(x, name))
       
-  df['year']=df.index.map(lambda x: start_date(x)[0])
-  df['month']=df.index.map(lambda x: start_date(x)[1])
-  df['day_number']=df.index.map(lambda x: start_date(x)[2])
-  df['hour']=df.index.map(lambda x: start_date(x)[3])
-  df['minute']=df.index.map(lambda x: start_date(x)[4])
 
-  def get_week_day(index):
-      day = int(df.loc[index, 'day_number'])
-      month = int(monthdict[df.loc[index, 'month']]+1)
-      year = int(df.loc[index, 'year'])
-      if day==0:
-          # Bug: 179 entries with date 2021-01-0, scripted_day_of_week was indicating 3 in isoweekday
-          return 2
-      return datetime.date(year, month, day).weekday()
-
-  df['day_of_week']=df.index.map(get_week_day)
+  for name in features_to_cumulate :
+      df['new_'+name] = df.index.map(lambda x: new_feature_cum(x, name))
 
 
+  for name in features_to_change :
+      df[name] = df['new_'+name]
+      df.drop('new_'+name, axis=1, inplace=True)
 
-  # remove wrong dates (2021/01/00),
-  df = df[df['day_number']!=0]
-  df = df[df['end_day_number']!=0]
-  # drop duplicate columns
-  # df.drop("duration", axis=1, inplace=True)
+  for name in features_to_cumulate :
+      df[name] = df['new_'+name]
+      df.drop('new_'+name, axis=1, inplace=True)
 
-  # Change types
-  df['day_number'] = df['day_number'].astype(int)
-  df['year'] = df['year'].astype(int)
+  # Delete lines
+
+  df['to_keep'] = df['Status_has_changed'].shift(1)
+  df.loc[df["next_plate"]!=df["car_plate_number"], 'to_keep'] = True
+
+  df = df[df["to_keep"]]
+  df.drop("to_keep", axis=1, inplace=True)
+  df.drop("Status_has_changed", axis=1, inplace=True)
+  df.drop('last_plate', axis=1, inplace=True)
+  df.drop('next_plate', axis=1, inplace=True)
+  df.drop('next_group_id', axis=1, inplace=True)
+  df.drop('last_status', axis=1, inplace=True)
+  df.drop('end_date', axis=1, inplace=True)
+
+  print("second interpolation done!")
+
+  ## Start date column --> Start dates are not reliable in car_history (it may be 1 or 2 hours shifted from the real time because of azure's conversions). Therefore start_date is recalulated from end date and duration of the segment.
+
+  df['kibana_duration_delta_time'] = df['kibana_duration'].apply(pd.to_timedelta, unit = 'm')
+  df['start_date_time'] = df['end_date_time'] - df['kibana_duration_delta_time']
+  df['day'] = df['start_date_time'].dt.day
+  df = df[df['day']!=0] # remove wrong dates (2021/01/00)
+  df.drop('day', axis=1, inplace=True)
+  df['day_of_week'] = df['start_date_time'].dt.day_of_week
 
 
   ## Export csv
 
+  df = df.sort_values(by="start_date_time", ascending = False)
+  df.reset_index(drop=True, inplace = True)
   df.to_csv(f"{zipcode}.csv")
 
 

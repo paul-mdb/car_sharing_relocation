@@ -20,12 +20,14 @@ NO_AVG_FOLDER = "no_average_availability/"
 BOOKING_FOLDER = "bookings/"
 TABLE_FOLDER = "tables/"
 
-for zipcode in range(75001, 75021):
+for zipcode in range(75001, 75002):
     print(zipcode)
     df = pd.read_csv(f"{zipcode}.csv")
     df = df[df['day_number']!=0]
     df = df[df['end_day_number']!=0]
     df = df[df['kibana_duration']!=0]
+
+    ## UTILS
 
     def time_block(dataframe, start_time, end_time, scripted_day):
         return dataframe.loc[(dataframe['hour']>= start_time) & (dataframe['hour']<= end_time) & (dataframe['day_of_week']==scripted_day)]
@@ -39,38 +41,39 @@ for zipcode in range(75001, 75021):
     monthdict = {"Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5, "Jul": 6, "Aug": 7, "Sep": 8, "Oct": 9, "Nov": 10,  "Dec": 11}
     inv_month = {v: k for k, v in monthdict.items()}
 
-
     df['month'] = df['month'].map(monthdict)+1
     df['month'] = df['month'].astype(int)
     df['day_number'] = df['day_number'].astype(int)
     df['year'] = df['year'].astype(int)
 
     df = df.fillna(0)
+    
     # Convert floats to ints
     float_col = df.select_dtypes(include=['float64']) # This will select float columns only
     for col in float_col.columns.values:
         df[col] = df[col].astype('int64')
 
-
     ## Split overlapping segments to match time blocks and get ALL segments in one block
-
 
     def split(index, block_list):
         additional_segments = pd.DataFrame()
         if df.loc[index, 'status']=="FREE":
-            start_minute, end_minute = df.loc[index, "minute"], df.loc[index, "end_minutes"]
-            start_hour, end_hour = df.loc[index, "hour"], df.loc[index, "end_hour"]
-            start_day, end_day = df.loc[index, "day_number"], df.loc[index, "end_day_number"]
-            month, end_month = df.loc[index, "month"], df.loc[index, "end_month"]
-            year, end_year = df.loc[index, "year"], df.loc[index, "end_year"]
-            start_block = 0 # To which block belongs the start hour ?
+            start_date_time = df.loc[index, 'start_date_time']
+            end_date_time = df.loc[index, 'end_date_time']
+            start_hour, end_hour = start_date_time.hour, end_date_time.hour
+            start_day, end_day = start_date_time.day, end_date_time.day
+            month, end_month = start_date_time.month, end_date_time.month
+            year, end_year = start_date_time.year, end_date_time.year
+
+            start_block = 0 # To which block belongs the start hour
             while start_block < len(block_list) and start_hour >= block_list[start_block][0] :
                 start_block+=1
             start_block-=1
-            end_block = len(block_list)-1 # To which block belongs the end hour ?
+            end_block = len(block_list)-1 # To which block belongs the end hour
             while end_block >= 0 and end_hour <= block_list[end_block][1] :
                 end_block-=1
             end_block+=1
+            
             if start_day==end_day:
                 if start_block!=end_block:
                     new_segment = df.loc[index]
@@ -80,7 +83,7 @@ for zipcode in range(75001, 75021):
                         new_segment = df.loc[index]
                         new_segment['hour']=block_list[block][0]
                         new_segment['end_hour']=block_list[block][1]
-                        new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                        new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     new_segment = df.loc[index]
                     new_segment['hour']=block_list[end_block][0]
@@ -92,7 +95,7 @@ for zipcode in range(75001, 75021):
                 new_segment['end_hour']=block_list[start_block][1]
                 new_segment['end_day_number']=start_day
                 new_segment['end_month']=month
-                new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
+                new_segment['duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[start_block][0], 0)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 for block in range(start_block+1, len(block_list)):
                     new_segment = df.loc[index]
@@ -100,7 +103,7 @@ for zipcode in range(75001, 75021):
                     new_segment['end_hour']=block_list[block][1]
                     new_segment['end_day_number']=start_day
                     new_segment['end_month']=month
-                    new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(year, month, start_day, block_list[block][0], 0)).seconds/60)
+                    new_segment['duration']=int((end_date_time - datetime.datetime(year, month, start_day, block_list[block][0], 0)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments end day
                 for block in range(0, end_block):
@@ -109,13 +112,13 @@ for zipcode in range(75001, 75021):
                     new_segment['end_hour']=block_list[block][1]
                     new_segment['day_number']=end_day
                     new_segment['month']=end_month
-                    new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
+                    new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[block][0], 0)).seconds/60)
                     additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 new_segment = df.loc[index]
                 new_segment['hour']=block_list[end_block][0]
                 new_segment['day_number']=end_day
                 new_segment['month']=end_month
-                new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(end_year, end_month, end_day, block_list[end_block][0], 0)).seconds/60)
+                new_segment['duration']=int((end_date_time - datetime.datetime(end_year, end_month, end_day, block_list[end_block][0], 0)).seconds/60)
                 additional_segments = additional_segments.append(new_segment, ignore_index = True)
                 # Create segments other days
                 try :
@@ -135,7 +138,7 @@ for zipcode in range(75001, 75021):
                         new_segment['day_number']=date.day
                         new_segment['end_day_number']=date.day
                         new_segment['month']=date.month
-                        new_segment['duration']=int((datetime.datetime(end_year, end_month, end_day, end_hour, end_minute) - datetime.datetime(end_year, date.month, date.day, block_list[block][0], 0)).seconds/60)
+                        new_segment['duration']=int((end_date_time - datetime.datetime(end_year, date.month, date.day, block_list[block][0], 0)).seconds/60)
                         additional_segments = additional_segments.append(new_segment, ignore_index = True)
                     date += datetime.timedelta(days=1)
                 df.drop(index, inplace=True)
@@ -231,8 +234,8 @@ for zipcode in range(75001, 75021):
             plt.xlabel("Number of free cars in block")
             plt.ylabel("free duration mean")
             # plt.legend(loc="upper left")
-            plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.title(f"{days_dict[day+1]} from {start_date}h to {(end_date+1)%24}h - {zipcode}", fontsize=20)
+            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+AVG_FOLDER+f"AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{(end_date+1)%24}h.png")
             plt.clf()
 
 
@@ -276,8 +279,8 @@ for zipcode in range(75001, 75021):
             plt.xlabel("Number of free cars in block")
             plt.ylabel("free duration mean")
             # plt.legend(loc="upper left")
-            plt.title(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            plt.title(f"{days_dict[day+1]} from {start_date}h to {(end_date+1)%24}h - {zipcode}", fontsize=20)
+            plt.savefig(PLOTS_FOLDER+f"{zipcode}/"+NO_AVG_FOLDER+f"NO_AVG_AVAILABILITY-{zipcode}-{days_dict[day+1]}-{start_date}h-{(end_date+1)%24}h.png")
             plt.clf()
 
 
@@ -344,7 +347,7 @@ for zipcode in range(75001, 75021):
             ax1.legend(loc="upper left")
             ax2.legend(loc="upper left")
             fig.suptitle(f"{days_dict[day+1]} from {start_date}h to {end_date}h - {zipcode}", fontsize=20)
-            fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{end_date}h.png")
+            fig.savefig(PLOTS_FOLDER+f"{zipcode}/"+BOOKING_FOLDER+f"BOOKINGS_DEMAND-{zipcode}-{days_dict[day+1]}-{start_date}h-{(end_date+1)%24}h.png")
             plt.clf()
 
 
